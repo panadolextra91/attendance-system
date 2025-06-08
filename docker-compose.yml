@@ -1,0 +1,92 @@
+version: '3.8'
+
+services:
+  # Database services
+  postgres:
+    image: postgres:15
+    container_name: attendance-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: attendance
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - attendance-network
+
+  mongodb:
+    image: mongo:6
+    container_name: attendance-mongodb
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: mongo
+      MONGO_INITDB_ROOT_PASSWORD: mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - attendance-network
+
+  # Message broker
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: attendance-rabbitmq
+    ports:
+      - "5672:5672"   # AMQP port
+      - "15672:15672" # Management interface
+    environment:
+      RABBITMQ_DEFAULT_USER: rabbit
+      RABBITMQ_DEFAULT_PASS: rabbit
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - attendance-network
+
+  # Redis for caching
+  redis:
+    image: redis:7
+    container_name: attendance-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - attendance-network
+
+  # Auth service
+  auth-service:
+    build:
+      context: ./services/auth-service
+      dockerfile: Dockerfile
+    container_name: attendance-auth-service
+    ports:
+      - "3001:3001"
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/attendance?schema=auth
+      - JWT_SECRET=your-secret-key-for-development-change-in-production
+      - JWT_EXPIRATION=1d
+      - PORT=3001
+      - NODE_ENV=development
+    depends_on:
+      - postgres
+    networks:
+      - attendance-network
+    restart: unless-stopped
+
+  # Microservices will be added here as they are developed
+  # For example:
+  # auth-service:
+  #   build: ./services/auth-service
+  #   ...
+
+networks:
+  attendance-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  mongodb_data:
+  rabbitmq_data:
+  redis_data: 
