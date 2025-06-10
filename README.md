@@ -15,7 +15,7 @@ This system consists of several microservices:
 
 ## Technology Stack
 
-- **Backend**: NestJS (TypeScript)
+- **Backend**: Express.js (Node.js)
 - **Databases**:
   - PostgreSQL: User, course, and enrollment data
   - MongoDB: Attendance records and analytics
@@ -30,7 +30,7 @@ This system consists of several microservices:
 
 - Docker and Docker Compose
 - Node.js (v18+)
-- npm or yarn
+- npm
 
 ### Setup
 
