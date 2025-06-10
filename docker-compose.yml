@@ -75,10 +75,30 @@ services:
       - attendance-network
     restart: unless-stopped
 
+  # Course service
+  course-service:
+    build:
+      context: ./services/course-service
+      dockerfile: Dockerfile
+    container_name: attendance-course-service
+    ports:
+      - "3002:3002"
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/attendance?schema=course
+      - JWT_SECRET=your-secret-key-for-development-change-in-production
+      - PORT=3002
+      - NODE_ENV=development
+    depends_on:
+      - postgres
+      - auth-service
+    networks:
+      - attendance-network
+    restart: unless-stopped
+
   # Microservices will be added here as they are developed
   # For example:
-  # auth-service:
-  #   build: ./services/auth-service
+  # enrollment-service:
+  #   build: ./services/enrollment-service
   #   ...
 
 networks:
