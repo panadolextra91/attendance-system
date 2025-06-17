@@ -53,7 +53,8 @@ const isCourseOwnerOrAdmin = async (req, res, next) => {
     return res.status(401).json({ error: 'Unauthorized' });
   }
   
-  const { id: userId, role } = req.user;
+  const userId = req.user.sub || req.user.id;
+  const { role } = req.user;
   const courseId = req.params.id || req.body.courseId;
   
   // Admins can access any course
