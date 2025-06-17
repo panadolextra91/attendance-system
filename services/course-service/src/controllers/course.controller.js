@@ -45,7 +45,12 @@ const createCourse = async (req, res) => {
     }
     
     // Get teacher ID from authenticated user
-    const teacherId = req.user.id;
+    const teacherId = req.user.sub || req.user.id;
+    
+    if (!teacherId) {
+      console.error("User ID not found in token:", req.user);
+      return res.status(500).json({ error: 'User ID not found in token' });
+    }
     
     // Create course
     const course = await courseService.createCourse({
@@ -86,7 +91,8 @@ const updateCourse = async (req, res) => {
     
     // Check if user is the teacher of this course or an admin
     const isAdmin = req.user.role === 'ADMIN';
-    const isTeacherOwner = req.user.role === 'TEACHER' && existingCourse.teacherId === req.user.id;
+    const userId = req.user.sub || req.user.id;
+    const isTeacherOwner = req.user.role === 'TEACHER' && existingCourse.teacherId === userId;
     
     if (!isAdmin && !isTeacherOwner) {
       return res.status(403).json({ error: 'You do not have permission to update this course' });
@@ -129,7 +135,8 @@ const deleteCourse = async (req, res) => {
     
     // Check if user is the teacher of this course or an admin
     const isAdmin = req.user.role === 'ADMIN';
-    const isTeacherOwner = req.user.role === 'TEACHER' && existingCourse.teacherId === req.user.id;
+    const userId = req.user.sub || req.user.id;
+    const isTeacherOwner = req.user.role === 'TEACHER' && existingCourse.teacherId === userId;
     
     if (!isAdmin && !isTeacherOwner) {
       return res.status(403).json({ error: 'You do not have permission to delete this course' });

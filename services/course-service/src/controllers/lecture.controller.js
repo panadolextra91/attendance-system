@@ -68,7 +68,8 @@ const createLecture = async (req, res) => {
     
     // Check if user is the teacher of this course or an admin
     const isAdmin = req.user.role === 'ADMIN';
-    const isTeacherOwner = req.user.role === 'TEACHER' && course.teacherId === req.user.id;
+    const userId = req.user.sub || req.user.id;
+    const isTeacherOwner = req.user.role === 'TEACHER' && course.teacherId === userId;
     
     if (!isAdmin && !isTeacherOwner) {
       return res.status(403).json({ error: 'You do not have permission to add lectures to this course' });
@@ -110,7 +111,8 @@ const updateLecture = async (req, res) => {
     
     // Check if user is the teacher of this course or an admin
     const isAdmin = req.user.role === 'ADMIN';
-    const isTeacherOwner = req.user.role === 'TEACHER' && course.teacherId === req.user.id;
+    const userId = req.user.sub || req.user.id;
+    const isTeacherOwner = req.user.role === 'TEACHER' && course.teacherId === userId;
     
     if (!isAdmin && !isTeacherOwner) {
       return res.status(403).json({ error: 'You do not have permission to update this lecture' });
@@ -150,7 +152,8 @@ const deleteLecture = async (req, res) => {
     
     // Check if user is the teacher of this course or an admin
     const isAdmin = req.user.role === 'ADMIN';
-    const isTeacherOwner = req.user.role === 'TEACHER' && course.teacherId === req.user.id;
+    const userId = req.user.sub || req.user.id;
+    const isTeacherOwner = req.user.role === 'TEACHER' && course.teacherId === userId;
     
     if (!isAdmin && !isTeacherOwner) {
       return res.status(403).json({ error: 'You do not have permission to delete this lecture' });
