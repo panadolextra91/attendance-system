@@ -52,11 +52,21 @@ const getLectureById = async (req, res) => {
  */
 const createLecture = async (req, res) => {
   try {
-    const { title, startTime, endTime, locationId, courseId } = req.body;
+    const { title, startTime, endTime, locationId, courseId, type = 'OFFLINE' } = req.body;
     
     // Validate required fields
-    if (!startTime || !endTime || !courseId) {
+    if (!startTime || !endTime || !courseId || !type) {
       return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    // Validate type
+    if (!['ONLINE', 'OFFLINE'].includes(type)) {
+      return res.status(400).json({ error: 'Invalid lecture type. Must be ONLINE or OFFLINE' });
+    }
+
+    // Validate location for OFFLINE lectures
+    if (type === 'OFFLINE' && !locationId) {
+      return res.status(400).json({ error: 'Location ID is required for OFFLINE lectures' });
     }
     
     // Check if course exists and user has permission
@@ -80,7 +90,8 @@ const createLecture = async (req, res) => {
       title,
       startTime: new Date(startTime),
       endTime: new Date(endTime),
-      locationId,
+      type,
+      locationId: type === 'ONLINE' ? null : locationId, // Only set locationId for OFFLINE lectures
       courseId
     });
     
@@ -97,7 +108,17 @@ const createLecture = async (req, res) => {
 const updateLecture = async (req, res) => {
   try {
     const { id } = req.params;
-    const { title, startTime, endTime, locationId } = req.body;
+    const { title, startTime, endTime, locationId, type } = req.body;
+    
+    // If type is being updated, validate it
+    if (type && !['ONLINE', 'OFFLINE'].includes(type)) {
+      return res.status(400).json({ error: 'Invalid lecture type. Must be ONLINE or OFFLINE' });
+    }
+    
+    // If updating to OFFLINE, ensure locationId is provided
+    if (type === 'OFFLINE' && !locationId) {
+      return res.status(400).json({ error: 'Location ID is required for OFFLINE lectures' });
+    }
     
     // Get current lecture to check course ownership
     const existingLecture = await lectureService.getLectureById(id);
@@ -119,12 +140,18 @@ const updateLecture = async (req, res) => {
     }
     
     // Update lecture
-    const updatedLecture = await lectureService.updateLecture(id, {
+    const updateData = {
       title,
       startTime: startTime ? new Date(startTime) : undefined,
       endTime: endTime ? new Date(endTime) : undefined,
-      locationId
-    });
+      type,
+      locationId: type === 'ONLINE' ? null : locationId // Clear location if switching to ONLINE
+    };
+    
+    // Only include fields that are being updated
+    Object.keys(updateData).forEach(key => updateData[key] === undefined && delete updateData[key]);
+    
+    const updatedLecture = await lectureService.updateLecture(id, updateData);
     
     res.status(200).json(updatedLecture);
   } catch (error) {

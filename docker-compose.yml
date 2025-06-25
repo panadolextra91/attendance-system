@@ -95,6 +95,26 @@ services:
       - attendance-network
     restart: unless-stopped
 
+  # Location service
+  location-service:
+    build:
+      context: ./services/location-service
+      dockerfile: Dockerfile
+    container_name: attendance-location-service
+    ports:
+      - "3003:3003"
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/attendance?schema=location
+      - JWT_SECRET=your-secret-key-for-development-change-in-production
+      - PORT=3003
+      - NODE_ENV=development
+      - CORS_ORIGIN=*
+    depends_on:
+      - postgres
+    networks:
+      - attendance-network
+    restart: unless-stopped
+
   # Microservices will be added here as they are developed
   # For example:
   # enrollment-service:
