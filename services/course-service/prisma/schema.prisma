@@ -11,6 +11,12 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// Types of lectures
+enum LectureType {
+  ONLINE    // For virtual lectures
+  OFFLINE   // For in-person lectures in auditoriums
+}
+
 model Course {
   id            String    @id @default(uuid())
   code          String    @unique
@@ -27,15 +33,16 @@ model Course {
 }
 
 model Lecture {
-  id            String    @id @default(uuid())
+  id            String      @id @default(uuid())
   title         String?
   startTime     DateTime
   endTime       DateTime
-  locationId    String?   // References location in location service
+  type          LectureType @default(OFFLINE)
+  locationId    String?     // References location in location service (required for OFFLINE type)
   courseId      String
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
   
   // Relations
-  course        Course    @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  course        Course      @relation(fields: [courseId], references: [id], onDelete: Cascade)
 } 

@@ -1,4 +1,5 @@
 const dbService = require('./db.service');
+const locationClient = require('./location.client');
 
 /**
  * Get all lectures
@@ -38,7 +39,14 @@ const getLectureById = async (id) => {
   return prisma.lecture.findUnique({
     where: { id },
     include: {
-      course: true
+      course: {
+        select: {
+          id: true,
+          name: true,
+          code: true,
+          teacherId: true
+        }
+      }
     }
   });
 };
@@ -50,8 +58,24 @@ const getLectureById = async (id) => {
 const createLecture = async (lectureData) => {
   const prisma = dbService.getClient();
   
+  // Validate location if provided
+  if (lectureData.locationId) {
+    await locationClient.validateLocation(lectureData.locationId, lectureData.type || 'OFFLINE');
+  } else if (lectureData.type !== 'ONLINE') {
+    throw new Error('Location ID is required for offline lectures');
+  }
+  
+  // Ensure locationId is null for ONLINE lectures
+  const data = {
+    ...lectureData,
+    locationId: lectureData.type === 'ONLINE' ? null : lectureData.locationId
+  };
+  
   return prisma.lecture.create({
-    data: lectureData
+    data,
+    include: {
+      course: true
+    }
   });
 };
 
@@ -61,11 +85,28 @@ const createLecture = async (lectureData) => {
  * @param {Object} lectureData - Updated lecture data
  */
 const updateLecture = async (id, lectureData) => {
+  // If updating location or type, validate the location
+  if (lectureData.locationId || lectureData.type) {
+    const existing = await getLectureById(id);
+    const type = lectureData.type || existing.type;
+    const locationId = lectureData.locationId || existing.locationId;
+    
+    await locationClient.validateLocation(locationId, type);
+  }
   const prisma = dbService.getClient();
+  
+  // If type is being set to ONLINE, ensure locationId is null
+  const data = { ...lectureData };
+  if (data.type === 'ONLINE') {
+    data.locationId = null;
+  }
   
   return prisma.lecture.update({
     where: { id },
-    data: lectureData
+    data,
+    include: {
+      course: true
+    }
   });
 };
 

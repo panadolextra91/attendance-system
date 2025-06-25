@@ -1,0 +1,48 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Types of locations
+enum LocationType {
+  AUDITORIUM
+  ONLINE
+}
+
+model Location {
+  id           String    @id @default(uuid())
+  name         String
+  description  String?
+  type         LocationType
+  capacity     Int?
+  latitude     Float?      // For physical locations
+  longitude    Float?      // For physical locations
+  radius       Int?        // In meters, for geofencing
+  meetingLink  String?     // For online locations
+  isActive     Boolean     @default(true)
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  
+  // Relations
+  lectures     Lecture[]   @ignore   // Virtual field for Prisma relations
+  
+  @@map("locations")
+}
+
+// This prevents Prisma from complaining about the Lecture model not being defined
+model Lecture {
+  id           String     @id
+  locationId   String?
+  location     Location?  @relation(fields: [locationId], references: [id])
+  
+  @@map("lectures")
+  @@ignore
+}
